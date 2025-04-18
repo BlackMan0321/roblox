@@ -1,0 +1,9 @@
+local MessageLib = loadstring(game:HttpGet(("https://raw.githubusercontent.com/BlackMan0321/roblox/main/message")))()
+ MessageLib:MakeNotification(
+      {
+          Name = "BlackMan | Roblox",
+          Content = "Script Aktif Edildi",
+          Image = "rbxassetid://0",
+          Time = 5
+      }
+  )
