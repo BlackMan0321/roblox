@@ -1,17 +1,20 @@
+local UserInputService = game:GetService("UserInputService")
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
-local screenGui = Instance.new("ScreenGui", playerGui)
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "GardenUI"
 screenGui.ResetOnSpawn = false
-local panel = Instance.new("Frame", screenGui)
-panel.Size = UDim2.new(0, 240, 0, 320)
-panel.Position = UDim2.new(0.5, -120, 0.5, -160)
+screenGui.Parent = playerGui
+local panel = Instance.new("Frame")
+panel.Name = "GardenPanel"
+panel.Size = UDim2.new(0, 240, 0, 380)
+panel.Position = UDim2.new(0.5, -120, 0.5, -190)
 panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 panel.BorderSizePixel = 0
-panel.Name = "GardenPanel"
-panel.ClipsDescendants = true
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
-panel.BackgroundTransparency = 0
+panel.ClipsDescendants = true
+panel.Visible = false
+panel.Parent = screenGui
 local uiStroke = Instance.new("UIStroke", panel)
 uiStroke.Thickness = 2
 uiStroke.Color = Color3.fromRGB(80, 80, 80)
@@ -30,40 +33,39 @@ title.TextColor3 = Color3.fromRGB(230, 230, 230)
 title.TextXAlignment = Enum.TextXAlignment.Left
 local titlePadding = Instance.new("UIPadding", title)
 titlePadding.PaddingLeft = UDim.new(0, 15)
-titlePadding.PaddingRight = UDim.new(0, 15)
-local UserInputService = game:GetService("UserInputService")
-local function createButtonRow(parent, yPos, labelText)
-    local row = Instance.new("Frame", parent)
-    row.Size = UDim2.new(1, 0, 0, 50)
-    row.Position = UDim2.new(0, 0, 0, yPos)
-    row.BackgroundTransparency = 1
-    local label = Instance.new("TextLabel", row)
+local function createButton(parent, yPos, name, initialColor)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundTransparency = 1
+    local label = Instance.new("TextLabel", frame)
     label.Size = UDim2.new(0.7, -10, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = labelText
+    label.Text = name
     label.TextScaled = true
     label.Font = Enum.Font.GothamSemibold
     label.TextColor3 = Color3.fromRGB(200, 200, 200)
     label.TextXAlignment = Enum.TextXAlignment.Left
-    local button = Instance.new("TextButton", row)
+    local button = Instance.new("TextButton", frame)
     button.Size = UDim2.new(0, 45, 0, 45)
     button.Position = UDim2.new(1, -55, 0.5, -22)
-    button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    button.BackgroundColor3 = initialColor or Color3.fromRGB(200, 0, 0)
     button.Text = ""
     button.AutoButtonColor = false
     button.BorderSizePixel = 0
-    button.Name = labelText .. "Button"
+    button.Name = name .. "Button"
     local buttonCorner = Instance.new("UICorner", button)
     buttonCorner.CornerRadius = UDim.new(0, 8)
-    return row, button
+    return frame, button
 end
 local spacing = 60
 local startY = 60
-local collectRow, collectButton = createButtonRow(panel, startY, "Collect")
-local sellRow, sellButton = createButtonRow(panel, startY + spacing, "Sell")
-local seedsRow, seedsButton = createButtonRow(panel, startY + spacing * 2, "Seeds")
-local gearRow, gearButton = createButtonRow(panel, startY + spacing * 3, "Gear")
+local collectRow, collectButton = createButton(panel, startY, "Collect", Color3.fromRGB(200, 0, 0))
+local clearRow, clearButton = createButton(panel, startY + spacing, "Clear", Color3.fromRGB(200, 0, 0))
+local sellRow, sellButton = createButton(panel, startY + spacing * 2, "Sell", Color3.fromRGB(200, 0, 0))
+local seedsRow, seedsButton = createButton(panel, startY + spacing * 3, "Seeds", Color3.fromRGB(200, 0, 0))
+local gearRow, gearButton = createButton(panel, startY + spacing * 4, "Gear", Color3.fromRGB(200, 0, 0))
 local seedsToggled = false
 seedsButton.MouseEnter:Connect(function()
     if not seedsToggled then
@@ -110,16 +112,47 @@ gearButton.MouseButton1Click:Connect(function()
         gearButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
-local credit = Instance.new("TextLabel", panel)
-credit.Size = UDim2.new(1, 0, 0, 20)
-credit.Position = UDim2.new(0, 0, 1, -25)
-credit.BackgroundTransparency = 1
-credit.Text = "Made By LBMScriptz"
-credit.TextScaled = true
-credit.Font = Enum.Font.Gotham
-credit.TextColor3 = Color3.fromRGB(180, 180, 180)
-local creditCorner = Instance.new("UICorner", credit)
-creditCorner.CornerRadius = UDim.new(0, 6)
+local clearToggled = false
+local function toggleTransparencyAndCollide(transparent)
+    local farmFolder = workspace:FindFirstChild("Farm")
+    if not farmFolder then return end
+    for _, subFarm in pairs(farmFolder:GetChildren()) do
+        if subFarm:IsA("Folder") then
+            local importantFolder = subFarm:FindFirstChild("Important")
+            if importantFolder then
+                local plantsPhysicalFolder = importantFolder:FindFirstChild("Plants_Physical")
+                if plantsPhysicalFolder then
+                    for _, model in pairs(plantsPhysicalFolder:GetChildren()) do
+                        if model:IsA("Model") then
+                            for _, part in pairs(model:GetChildren()) do
+                                if part:IsA("BasePart") then
+                                    part.Transparency = transparent and 1 or 0
+                                    part.CanCollide = not transparent
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+clearButton.MouseButton1Click:Connect(function()
+    clearToggled = not clearToggled
+    if clearToggled then
+        clearButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        toggleTransparencyAndCollide(true)
+    else
+        clearButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        toggleTransparencyAndCollide(false)
+    end
+end)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
+        panel.Visible = not panel.Visible
+    end
+end)
 local dragging = false
 local dragInput = nil
 local dragStart = nil
