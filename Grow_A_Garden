@@ -3,7 +3,6 @@ local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "GardenUI"
 screenGui.ResetOnSpawn = false
-
 local panel = Instance.new("Frame", screenGui)
 panel.Size = UDim2.new(0, 240, 0, 320)
 panel.Position = UDim2.new(0.5, -120, 0.5, -160)
@@ -13,16 +12,13 @@ panel.Name = "GardenPanel"
 panel.ClipsDescendants = true
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
 panel.BackgroundTransparency = 0
-
 local uiStroke = Instance.new("UIStroke", panel)
 uiStroke.Thickness = 2
 uiStroke.Color = Color3.fromRGB(80, 80, 80)
 uiStroke.Transparency = 0.5
 uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
 local uiCorner = Instance.new("UICorner", panel)
 uiCorner.CornerRadius = UDim.new(0, 10)
-
 local title = Instance.new("TextLabel", panel)
 title.Size = UDim2.new(1, 0, 0, 60)
 title.Position = UDim2.new(0, 0, 0, 0)
@@ -32,20 +28,15 @@ title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.fromRGB(230, 230, 230)
 title.TextXAlignment = Enum.TextXAlignment.Left
-
 local titlePadding = Instance.new("UIPadding", title)
 titlePadding.PaddingLeft = UDim.new(0, 15)
 titlePadding.PaddingRight = UDim.new(0, 15)
-
 local UserInputService = game:GetService("UserInputService")
-
--- Buton oluşturma
 local function createButtonRow(parent, yPos, labelText)
     local row = Instance.new("Frame", parent)
     row.Size = UDim2.new(1, 0, 0, 50)
     row.Position = UDim2.new(0, 0, 0, yPos)
     row.BackgroundTransparency = 1
-
     local label = Instance.new("TextLabel", row)
     label.Size = UDim2.new(0.7, -10, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
@@ -55,7 +46,6 @@ local function createButtonRow(parent, yPos, labelText)
     label.Font = Enum.Font.GothamSemibold
     label.TextColor3 = Color3.fromRGB(200, 200, 200)
     label.TextXAlignment = Enum.TextXAlignment.Left
-
     local button = Instance.new("TextButton", row)
     button.Size = UDim2.new(0, 45, 0, 45)
     button.Position = UDim2.new(1, -55, 0.5, -22)
@@ -64,22 +54,16 @@ local function createButtonRow(parent, yPos, labelText)
     button.AutoButtonColor = false
     button.BorderSizePixel = 0
     button.Name = labelText .. "Button"
-
     local buttonCorner = Instance.new("UICorner", button)
     buttonCorner.CornerRadius = UDim.new(0, 8)
-
     return row, button
 end
-
 local spacing = 60
 local startY = 60
-
 local collectRow, collectButton = createButtonRow(panel, startY, "Collect")
 local sellRow, sellButton = createButtonRow(panel, startY + spacing, "Sell")
 local seedsRow, seedsButton = createButtonRow(panel, startY + spacing * 2, "Seeds")
 local gearRow, gearButton = createButtonRow(panel, startY + spacing * 3, "Gear")
-
--- 🌱 Seeds Button özel kontrol
 local seedsToggled = false
 seedsButton.MouseEnter:Connect(function()
     if not seedsToggled then
@@ -103,8 +87,6 @@ seedsButton.MouseButton1Click:Connect(function()
         seedsButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
-
--- 🧰 Gear Button özel kontrol
 local gearToggled = false
 gearButton.MouseEnter:Connect(function()
     if not gearToggled then
@@ -128,8 +110,6 @@ gearButton.MouseButton1Click:Connect(function()
         gearButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
-
--- Kredi etiketi
 local credit = Instance.new("TextLabel", panel)
 credit.Size = UDim2.new(1, 0, 0, 20)
 credit.Position = UDim2.new(0, 0, 1, -25)
@@ -138,16 +118,12 @@ credit.Text = "Made By LBMScriptz"
 credit.TextScaled = true
 credit.Font = Enum.Font.Gotham
 credit.TextColor3 = Color3.fromRGB(180, 180, 180)
-
 local creditCorner = Instance.new("UICorner", credit)
 creditCorner.CornerRadius = UDim.new(0, 6)
-
--- Panel sürükleme
 local dragging = false
 local dragInput = nil
 local dragStart = nil
 local startPos = nil
-
 local function update(input)
     local delta = input.Position - dragStart
     panel.Position = UDim2.new(
@@ -157,7 +133,6 @@ local function update(input)
         startPos.Y.Offset + delta.Y
     )
 end
-
 panel.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
@@ -170,13 +145,11 @@ panel.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 panel.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         update(input)
