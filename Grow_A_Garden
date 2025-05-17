@@ -1,1 +1,52 @@
-print("aaaaaaa")
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- GUI oluştur
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "GardenUI"
+
+local panel = Instance.new("Frame", screenGui)
+panel.Size = UDim2.new(0, 200, 0, 300)
+panel.Position = UDim2.new(0.5, -100, 0.5, -150)
+panel.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+panel.BorderSizePixel = 2
+panel.Name = "GardenPanel"
+
+-- Başlık
+local title = Instance.new("TextLabel", panel)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Grow A Garden"
+title.TextScaled = true
+title.Font = Enum.Font.SourceSansBold
+title.TextColor3 = Color3.fromRGB(0, 0, 0)
+
+-- "Collect" butonu
+local collectButton = Instance.new("TextButton", panel)
+collectButton.Size = UDim2.new(0.8, 0, 0, 40)
+collectButton.Position = UDim2.new(0.1, 0, 1, -60)
+collectButton.Text = "Collect"
+collectButton.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+collectButton.TextScaled = true
+collectButton.Font = Enum.Font.SourceSans
+collectButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- Tick kutusu
+local tickButton = Instance.new("TextButton", panel)
+tickButton.Size = UDim2.new(0, 40, 0, 40)
+tickButton.Position = UDim2.new(1, -50, 1, -60)
+tickButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+tickButton.Text = ""
+tickButton.Name = "TickButton"
+
+-- Renk değiştirme işlevi
+local toggled = false
+tickButton.MouseButton1Click:Connect(function()
+	toggled = not toggled
+	if toggled then
+		tickButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		tickButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	end
+end)
