@@ -1,0 +1,449 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- GUI Oluşturma
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GameUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local panel = Instance.new("Frame")
+panel.Name = "GamePanel"
+panel.Size = UDim2.new(0, 240, 0, 260)
+panel.Position = UDim2.new(0.5, -120, 0.5, -130)
+panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panel.BorderSizePixel = 0
+panel.AnchorPoint = Vector2.new(0.5, 0.5)
+panel.ClipsDescendants = true
+panel.Visible = false
+panel.Parent = screenGui
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.fromRGB(80, 80, 80)
+uiStroke.Transparency = 0.5
+uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStroke.Parent = panel
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.Parent = panel
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 60)
+title.BackgroundTransparency = 1
+title.Text = "Squid Game"
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = panel
+
+local titlePadding = Instance.new("UIPadding")
+titlePadding.PaddingLeft = UDim.new(0, 15)
+titlePadding.Parent = title
+
+-- Speed Slider Label
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, -20, 0, 30)
+speedLabel.Position = UDim2.new(0, 10, 0, 65)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: 16"
+speedLabel.TextScaled = true
+speedLabel.Font = Enum.Font.GothamSemibold
+speedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = panel
+
+local speedSliderFrame = Instance.new("Frame")
+speedSliderFrame.Size = UDim2.new(1, -40, 0, 20)
+speedSliderFrame.Position = UDim2.new(0, 10, 0, 100)
+speedSliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedSliderFrame.BorderSizePixel = 0
+speedSliderFrame.Parent = panel
+
+local speedSliderCorner = Instance.new("UICorner")
+speedSliderCorner.CornerRadius = UDim.new(0, 5)
+speedSliderCorner.Parent = speedSliderFrame
+
+local sliderFill = Instance.new("Frame")
+sliderFill.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+sliderFill.Parent = speedSliderFrame
+
+local sliderFillCorner = Instance.new("UICorner")
+sliderFillCorner.CornerRadius = UDim.new(0, 5)
+sliderFillCorner.Parent = sliderFill
+
+local sliderButton = Instance.new("TextButton")
+sliderButton.Size = UDim2.new(0, 20, 1, 0)
+sliderButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+sliderButton.BorderSizePixel = 0
+sliderButton.AutoButtonColor = false
+sliderButton.Text = ""
+sliderButton.Parent = speedSliderFrame
+
+local sliderButtonCorner = Instance.new("UICorner")
+sliderButtonCorner.CornerRadius = UDim.new(0, 10)
+sliderButtonCorner.Parent = sliderButton
+
+local draggingSlider = false
+local currentSpeed = 16
+local MIN_SPEED = 10
+local MAX_SPEED = 100
+
+local initialRatio = (currentSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
+sliderFill.Size = UDim2.new(initialRatio, 0, 1, 0)
+sliderButton.Position = UDim2.new(initialRatio, 0, 0, 0)
+
+sliderButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relativeX = math.clamp(input.Position.X - speedSliderFrame.AbsolutePosition.X, 0, speedSliderFrame.AbsoluteSize.X)
+        local ratio = relativeX / speedSliderFrame.AbsoluteSize.X
+
+        local speedValue = math.floor(MIN_SPEED + ratio * (MAX_SPEED - MIN_SPEED) + 0.5)
+        speedValue = math.clamp(speedValue, MIN_SPEED, MAX_SPEED)
+
+        speedLabel.Text = "Speed: " .. speedValue
+        sliderFill.Size = UDim2.new(ratio, 0, 1, 0)
+        sliderButton.Position = UDim2.new(ratio, 0, 0, 0)
+        currentSpeed = speedValue
+    end
+end)
+
+-- ESP Button Section
+local espButtonFrame = Instance.new("Frame")
+espButtonFrame.Size = UDim2.new(1, 0, 0, 50)
+espButtonFrame.Position = UDim2.new(0, 0, 0, 140)
+espButtonFrame.BackgroundTransparency = 1
+espButtonFrame.Parent = panel
+
+local espLabel = Instance.new("TextLabel")
+espLabel.Size = UDim2.new(0.7, -10, 1, 0)
+espLabel.Position = UDim2.new(0, 10, 0, 0)
+espLabel.BackgroundTransparency = 1
+espLabel.Text = "ESP"
+espLabel.TextScaled = true
+espLabel.Font = Enum.Font.GothamSemibold
+espLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+espLabel.TextXAlignment = Enum.TextXAlignment.Left
+espLabel.Parent = espButtonFrame
+
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0, 45, 0, 45)
+espButton.Position = UDim2.new(1, -55, 0.5, -22)
+espButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+espButton.Text = ""
+espButton.AutoButtonColor = false
+espButton.BorderSizePixel = 0
+espButton.Name = "ESPButton"
+espButton.Parent = espButtonFrame
+
+local espButtonCorner = Instance.new("UICorner")
+espButtonCorner.CornerRadius = UDim.new(0, 8)
+espButtonCorner.Parent = espButton
+
+local espToggled = false
+
+espButton.MouseEnter:Connect(function()
+    if not espToggled then
+        espButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    end
+end)
+
+espButton.MouseLeave:Connect(function()
+    if not espToggled then
+        espButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    end
+end)
+
+espButton.MouseButton1Click:Connect(function()
+    espToggled = not espToggled
+    espButton.BackgroundColor3 = espToggled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
+end)
+
+-- GodMode Button Section
+local godModeButtonFrame = Instance.new("Frame")
+godModeButtonFrame.Size = UDim2.new(1, 0, 0, 50)
+godModeButtonFrame.Position = UDim2.new(0, 0, 0, 200)
+godModeButtonFrame.BackgroundTransparency = 1
+godModeButtonFrame.Parent = panel
+
+local godModeLabel = Instance.new("TextLabel")
+godModeLabel.Size = UDim2.new(0.7, -10, 1, 0)
+godModeLabel.Position = UDim2.new(0, 10, 0, 0)
+godModeLabel.BackgroundTransparency = 1
+godModeLabel.Text = "GodMode"
+godModeLabel.TextScaled = true
+godModeLabel.Font = Enum.Font.GothamSemibold
+godModeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+godModeLabel.TextXAlignment = Enum.TextXAlignment.Left
+godModeLabel.Parent = godModeButtonFrame
+
+local godModeButton = Instance.new("TextButton")
+godModeButton.Size = UDim2.new(0, 45, 0, 45)
+godModeButton.Position = UDim2.new(1, -55, 0.5, -22)
+godModeButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+godModeButton.Text = ""
+godModeButton.AutoButtonColor = false
+godModeButton.BorderSizePixel = 0
+godModeButton.Name = "GodModeButton"
+godModeButton.Parent = godModeButtonFrame
+
+local godModeButtonCorner = Instance.new("UICorner")
+godModeButtonCorner.CornerRadius = UDim.new(0, 8)
+godModeButtonCorner.Parent = godModeButton
+
+local godModeToggled = false
+local godModeCharacter = nil
+local godModeLoop = nil
+
+-- Noclip function
+local function noclipCharacter(char)
+    if not char then return end
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+-- Infinite jump input connection
+local infiniteJumpConnection
+
+local function setupInfiniteJump(character)
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+
+    -- Disconnect varsa eski bağlantı
+    if infiniteJumpConnection then
+        infiniteJumpConnection:Disconnect()
+        infiniteJumpConnection = nil
+    end
+
+    infiniteJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if godModeToggled and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+end
+
+local function enableGodMode()
+    local character = player.Character
+    if not character then return end
+    godModeCharacter = character
+
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+
+    -- 3 saniye donma
+    humanoid.PlatformStand = true
+    humanoid.WalkSpeed = 0
+    humanoid.JumpPower = 0
+
+    noclipCharacter(character)
+
+    task.spawn(function()
+        task.wait(3)
+
+        if godModeToggled and godModeCharacter == character then
+            humanoid.PlatformStand = false
+            humanoid.WalkSpeed = currentSpeed
+            humanoid.JumpPower = 100 -- yüksek zıplama gücü
+
+            setupInfiniteJump(character)
+
+            godModeLoop = task.spawn(function()
+                while godModeToggled and godModeCharacter == character do
+                    noclipCharacter(character)
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end)
+end
+
+local function disableGodMode()
+    local character = godModeCharacter
+    if not character then return end
+
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = false
+        humanoid.JumpPower = 50 -- varsayılan jump power
+        humanoid.WalkSpeed = currentSpeed
+    end
+
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+
+    -- Infinite jump input bağlantısını kes
+    if infiniteJumpConnection then
+        infiniteJumpConnection:Disconnect()
+        infiniteJumpConnection = nil
+    end
+
+    godModeCharacter = nil
+end
+
+local function toggleGodMode()
+    godModeToggled = not godModeToggled
+    godModeButton.BackgroundColor3 = godModeToggled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
+
+    if godModeToggled then
+        enableGodMode()
+    else
+        disableGodMode()
+    end
+end
+
+godModeButton.MouseButton1Click:Connect(toggleGodMode)
+
+-- Panel visibility toggle with Ctrl key
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
+        panel.Visible = not panel.Visible
+    end
+end)
+
+-- Panel dragging logic
+local draggingPanel = false
+local dragStartOffset = Vector2.new(0, 0)
+
+panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingPanel = true
+        dragStartOffset = input.Position - Vector2.new(panel.AbsolutePosition.X, panel.AbsolutePosition.Y)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingPanel and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local newAbsolutePosition = input.Position - dragStartOffset
+        panel.Position = UDim2.new(0, newAbsolutePosition.X, 0, newAbsolutePosition.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingPanel = false
+    end
+end)
+
+-- CORE GAME LOGIC
+
+-- Speed update loop
+task.spawn(function()
+    while task.wait() do
+        local char = player.Character or player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = currentSpeed
+        end
+    end
+end)
+
+-- ESP Logic with Highlight
+local espHighlights = {}
+
+local function createHighlightForCharacter(char, targetPlayer)
+    if espHighlights[targetPlayer] then
+        espHighlights[targetPlayer]:Destroy()
+        espHighlights[targetPlayer] = nil
+    end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = char
+    highlight.FillColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineColor = Color3.fromRGB(100, 100, 100)
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = char
+
+    espHighlights[targetPlayer] = highlight
+
+    local connection
+    connection = char.AncestryChanged:Connect(function()
+        if not char.Parent then
+            if espHighlights[targetPlayer] then
+                espHighlights[targetPlayer]:Destroy()
+                espHighlights[targetPlayer] = nil
+            end
+            if connection then connection:Disconnect() end
+        end
+    end)
+end
+
+local function removeHighlight(targetPlayer)
+    if espHighlights[targetPlayer] then
+        espHighlights[targetPlayer]:Destroy()
+        espHighlights[targetPlayer] = nil
+    end
+end
+
+local function updateESP()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local char = plr.Character
+            if espToggled then
+                if char then
+                    createHighlightForCharacter(char, plr)
+                else
+                    removeHighlight(plr)
+                end
+            else
+                removeHighlight(plr)
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function(char)
+        if espToggled and plr ~= player then
+            createHighlightForCharacter(char, plr)
+        end
+    end)
+end)
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr.Character then
+        plr.Character.AncestryChanged:Connect(function()
+            if espHighlights[plr] and (not plr.Character or not plr.Character.Parent) then
+                removeHighlight(plr)
+            end
+        end)
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.1) do
+        updateESP()
+    end
+end)
+
+game:BindToClose(function()
+    for _, highlight in pairs(espHighlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+end)
