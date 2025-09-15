@@ -1,449 +1,234 @@
-local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- GUI Oluşturma
+local DEFAULT_WALKSPEED = 16
+local DEFAULT_JUMPPOWER = 50
+local MIN_SPEED, MAX_SPEED = 16, 1000
+local MIN_JUMP, MAX_JUMP = 50, 200
+local toggleKey = Enum.KeyCode.M
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "GameUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+local themes = {
+    dark={
+        background=Color3.fromRGB(20,20,30),
+        panel=Color3.fromRGB(35,35,45),
+        accent=Color3.fromRGB(0,170,255),
+        text=Color3.fromRGB(255,255,255),
+        secondary=Color3.fromRGB(70,70,80)
+    },
+    light={
+        background=Color3.fromRGB(240,240,250),
+        panel=Color3.fromRGB(255,255,255),
+        accent=Color3.fromRGB(0,120,255),
+        text=Color3.fromRGB(25,25,25),
+        secondary=Color3.fromRGB(200,200,200)
+    }
+}
+local currentTheme="dark"
 
-local panel = Instance.new("Frame")
-panel.Name = "GamePanel"
-panel.Size = UDim2.new(0, 240, 0, 260)
-panel.Position = UDim2.new(0.5, -120, 0.5, -130)
-panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-panel.BorderSizePixel = 0
-panel.AnchorPoint = Vector2.new(0.5, 0.5)
-panel.ClipsDescendants = true
-panel.Visible = false
-panel.Parent = screenGui
-
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Thickness = 2
-uiStroke.Color = Color3.fromRGB(80, 80, 80)
-uiStroke.Transparency = 0.5
-uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-uiStroke.Parent = panel
-
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
-uiCorner.Parent = panel
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 60)
-title.BackgroundTransparency = 1
-title.Text = "Squid Game"
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.fromRGB(230, 230, 230)
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = panel
-
-local titlePadding = Instance.new("UIPadding")
-titlePadding.PaddingLeft = UDim.new(0, 15)
-titlePadding.Parent = title
-
--- Speed Slider Label
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -20, 0, 30)
-speedLabel.Position = UDim2.new(0, 10, 0, 65)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Speed: 16"
-speedLabel.TextScaled = true
-speedLabel.Font = Enum.Font.GothamSemibold
-speedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Parent = panel
-
-local speedSliderFrame = Instance.new("Frame")
-speedSliderFrame.Size = UDim2.new(1, -40, 0, 20)
-speedSliderFrame.Position = UDim2.new(0, 10, 0, 100)
-speedSliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-speedSliderFrame.BorderSizePixel = 0
-speedSliderFrame.Parent = panel
-
-local speedSliderCorner = Instance.new("UICorner")
-speedSliderCorner.CornerRadius = UDim.new(0, 5)
-speedSliderCorner.Parent = speedSliderFrame
-
-local sliderFill = Instance.new("Frame")
-sliderFill.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-sliderFill.Parent = speedSliderFrame
-
-local sliderFillCorner = Instance.new("UICorner")
-sliderFillCorner.CornerRadius = UDim.new(0, 5)
-sliderFillCorner.Parent = sliderFill
-
-local sliderButton = Instance.new("TextButton")
-sliderButton.Size = UDim2.new(0, 20, 1, 0)
-sliderButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-sliderButton.BorderSizePixel = 0
-sliderButton.AutoButtonColor = false
-sliderButton.Text = ""
-sliderButton.Parent = speedSliderFrame
-
-local sliderButtonCorner = Instance.new("UICorner")
-sliderButtonCorner.CornerRadius = UDim.new(0, 10)
-sliderButtonCorner.Parent = sliderButton
-
-local draggingSlider = false
-local currentSpeed = 16
-local MIN_SPEED = 10
-local MAX_SPEED = 100
-
-local initialRatio = (currentSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
-sliderFill.Size = UDim2.new(initialRatio, 0, 1, 0)
-sliderButton.Position = UDim2.new(initialRatio, 0, 0, 0)
-
-sliderButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local relativeX = math.clamp(input.Position.X - speedSliderFrame.AbsolutePosition.X, 0, speedSliderFrame.AbsoluteSize.X)
-        local ratio = relativeX / speedSliderFrame.AbsoluteSize.X
-
-        local speedValue = math.floor(MIN_SPEED + ratio * (MAX_SPEED - MIN_SPEED) + 0.5)
-        speedValue = math.clamp(speedValue, MIN_SPEED, MAX_SPEED)
-
-        speedLabel.Text = "Speed: " .. speedValue
-        sliderFill.Size = UDim2.new(ratio, 0, 1, 0)
-        sliderButton.Position = UDim2.new(ratio, 0, 0, 0)
-        currentSpeed = speedValue
-    end
-end)
-
--- ESP Button Section
-local espButtonFrame = Instance.new("Frame")
-espButtonFrame.Size = UDim2.new(1, 0, 0, 50)
-espButtonFrame.Position = UDim2.new(0, 0, 0, 140)
-espButtonFrame.BackgroundTransparency = 1
-espButtonFrame.Parent = panel
-
-local espLabel = Instance.new("TextLabel")
-espLabel.Size = UDim2.new(0.7, -10, 1, 0)
-espLabel.Position = UDim2.new(0, 10, 0, 0)
-espLabel.BackgroundTransparency = 1
-espLabel.Text = "ESP"
-espLabel.TextScaled = true
-espLabel.Font = Enum.Font.GothamSemibold
-espLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-espLabel.TextXAlignment = Enum.TextXAlignment.Left
-espLabel.Parent = espButtonFrame
-
-local espButton = Instance.new("TextButton")
-espButton.Size = UDim2.new(0, 45, 0, 45)
-espButton.Position = UDim2.new(1, -55, 0.5, -22)
-espButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-espButton.Text = ""
-espButton.AutoButtonColor = false
-espButton.BorderSizePixel = 0
-espButton.Name = "ESPButton"
-espButton.Parent = espButtonFrame
-
-local espButtonCorner = Instance.new("UICorner")
-espButtonCorner.CornerRadius = UDim.new(0, 8)
-espButtonCorner.Parent = espButton
-
-local espToggled = false
-
-espButton.MouseEnter:Connect(function()
-    if not espToggled then
-        espButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    end
-end)
-
-espButton.MouseLeave:Connect(function()
-    if not espToggled then
-        espButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    end
-end)
-
-espButton.MouseButton1Click:Connect(function()
-    espToggled = not espToggled
-    espButton.BackgroundColor3 = espToggled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
-end)
-
--- GodMode Button Section
-local godModeButtonFrame = Instance.new("Frame")
-godModeButtonFrame.Size = UDim2.new(1, 0, 0, 50)
-godModeButtonFrame.Position = UDim2.new(0, 0, 0, 200)
-godModeButtonFrame.BackgroundTransparency = 1
-godModeButtonFrame.Parent = panel
-
-local godModeLabel = Instance.new("TextLabel")
-godModeLabel.Size = UDim2.new(0.7, -10, 1, 0)
-godModeLabel.Position = UDim2.new(0, 10, 0, 0)
-godModeLabel.BackgroundTransparency = 1
-godModeLabel.Text = "GodMode"
-godModeLabel.TextScaled = true
-godModeLabel.Font = Enum.Font.GothamSemibold
-godModeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-godModeLabel.TextXAlignment = Enum.TextXAlignment.Left
-godModeLabel.Parent = godModeButtonFrame
-
-local godModeButton = Instance.new("TextButton")
-godModeButton.Size = UDim2.new(0, 45, 0, 45)
-godModeButton.Position = UDim2.new(1, -55, 0.5, -22)
-godModeButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-godModeButton.Text = ""
-godModeButton.AutoButtonColor = false
-godModeButton.BorderSizePixel = 0
-godModeButton.Name = "GodModeButton"
-godModeButton.Parent = godModeButtonFrame
-
-local godModeButtonCorner = Instance.new("UICorner")
-godModeButtonCorner.CornerRadius = UDim.new(0, 8)
-godModeButtonCorner.Parent = godModeButton
-
-local godModeToggled = false
-local godModeCharacter = nil
-local godModeLoop = nil
-
--- Noclip function
-local function noclipCharacter(char)
-    if not char then return end
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
+local function new(class,props)
+    local obj=Instance.new(class)
+    for k,v in pairs(props) do obj[k]=v end
+    return obj
 end
 
--- Infinite jump input connection
-local infiniteJumpConnection
+local gui=new("ScreenGui",{Name="ModernPanel",Parent=playerGui,ResetOnSpawn=false})
+local main=new("Frame",{Parent=gui,Size=UDim2.new(0.38,0,0.55,0),Position=UDim2.new(0.5,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=themes[currentTheme].panel})
+new("UICorner",{Parent=main,CornerRadius=UDim.new(0,16)})
+local sidebar=new("Frame",{Parent=main,Size=UDim2.new(0,160,1,0),BackgroundColor3=themes[currentTheme].background})
+new("UICorner",{Parent=sidebar,CornerRadius=UDim.new(0,12)})
+local content=new("Frame",{Parent=main,Size=UDim2.new(1,-160,1,0),Position=UDim2.new(0,160,0,0),BackgroundTransparency=1})
 
-local function setupInfiniteJump(character)
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then return end
+new("TextLabel",{Parent=main,Size=UDim2.new(1,0,0,20),Position=UDim2.new(0,0,1,-25),BackgroundTransparency=1,Font=Enum.Font.GothamBold,TextSize=14,TextColor3=Color3.fromRGB(200,200,200),Text="Made By BlackMan",TextXAlignment=Enum.TextXAlignment.Center})
 
-    -- Disconnect varsa eski bağlantı
-    if infiniteJumpConnection then
-        infiniteJumpConnection:Disconnect()
-        infiniteJumpConnection = nil
+local tabButtons={}
+
+local function applyTheme(name)
+    local t=themes[name]
+    main.BackgroundColor3=t.panel
+    sidebar.BackgroundColor3=t.background
+    for _,obj in pairs(main:GetDescendants()) do
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") then obj.TextColor3=t.text end
+        if obj:IsA("Frame") then
+            if obj.BackgroundColor3==themes[currentTheme].accent then obj.BackgroundColor3=t.accent
+            elseif obj.BackgroundColor3==themes[currentTheme].secondary then obj.BackgroundColor3=t.secondary end
+        end
     end
+    for _,btn in pairs(tabButtons) do btn.BackgroundColor3 = Color3.fromRGB(230,230,230) end
+    currentTheme=name
+end
+applyTheme(currentTheme)
 
-    infiniteJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if godModeToggled and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+local tabs={}
+local function createTab(name,icon)
+    local btn=new("TextButton",{Parent=sidebar,Size=UDim2.new(1,-20,0,40),Position=UDim2.new(0,10,0,#tabs*50+20),BackgroundColor3=themes[currentTheme].secondary,Text="",AutoButtonColor=false})
+    new("UICorner",{Parent=btn,CornerRadius=UDim.new(0,12)})
+    new("TextLabel",{Parent=btn,Size=UDim2.new(0,40,1,0),Text=icon,BackgroundTransparency=1,Font=Enum.Font.GothamBold,TextSize=20,TextColor3=themes[currentTheme].text})
+    new("TextLabel",{Parent=btn,Size=UDim2.new(1,-40,1,0),Position=UDim2.new(0,40,0,0),Text=name,BackgroundTransparency=1,Font=Enum.Font.GothamBold,TextSize=18,TextColor3=themes[currentTheme].text,TextXAlignment=Enum.TextXAlignment.Left})
+    table.insert(tabButtons,btn)
+    local page=new("Frame",{Parent=content,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Visible=false})
+    btn.MouseButton1Click:Connect(function()
+        for _,t in pairs(tabs) do t.page.Visible=false end
+        page.Visible=true
+    end)
+    table.insert(tabs,{button=btn,page=page})
+    return page
+end
+
+local playerPage=createTab("Oyuncu","👤")
+local settingsPage=createTab("Ayarlar","⚙️")
+local espPage=createTab("ESP","🔍")
+
+local function createSlider(parent,label,min,max,default,callback)
+    local frame=new("Frame",{Parent=parent,Size=UDim2.new(0,240,0,40),BackgroundTransparency=1})
+    local txt=new("TextLabel",{Parent=frame,Size=UDim2.new(0.45,0,1,0),Text=label..": "..default,BackgroundTransparency=1,Font=Enum.Font.Gotham,TextSize=16,TextColor3=themes[currentTheme].text,TextXAlignment=Enum.TextXAlignment.Left})
+    local sliderFrame=new("Frame",{Parent=frame,Size=UDim2.new(0.55,0,0.4,0),Position=UDim2.new(0.45,0,0.3,0),BackgroundColor3=themes[currentTheme].secondary})
+    new("UICorner",{Parent=sliderFrame,CornerRadius=UDim.new(0,10)})
+    local fill=new("Frame",{Parent=sliderFrame,Size=UDim2.new((default-min)/(max-min),0,1,0),BackgroundColor3=themes[currentTheme].accent})
+    new("UICorner",{Parent=fill,CornerRadius=UDim.new(0,10)})
+    local dragging=false
+    sliderFrame.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+    RunService.RenderStepped:Connect(function()
+        if dragging then
+            local pos=math.clamp((UserInputService:GetMouseLocation().X-sliderFrame.AbsolutePosition.X)/sliderFrame.AbsoluteSize.X,0,1)
+            fill.Size=UDim2.new(pos,0,1,0)
+            local value=math.floor(min+pos*(max-min))
+            txt.Text=label..": "..value
+            callback(value)
         end
     end)
+    return frame
 end
 
-local function enableGodMode()
-    local character = player.Character
-    if not character then return end
-    godModeCharacter = character
-
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then return end
-
-    -- 3 saniye donma
-    humanoid.PlatformStand = true
-    humanoid.WalkSpeed = 0
-    humanoid.JumpPower = 0
-
-    noclipCharacter(character)
-
-    task.spawn(function()
-        task.wait(3)
-
-        if godModeToggled and godModeCharacter == character then
-            humanoid.PlatformStand = false
-            humanoid.WalkSpeed = currentSpeed
-            humanoid.JumpPower = 100 -- yüksek zıplama gücü
-
-            setupInfiniteJump(character)
-
-            godModeLoop = task.spawn(function()
-                while godModeToggled and godModeCharacter == character do
-                    noclipCharacter(character)
-                    task.wait(0.1)
-                end
-            end)
-        end
+local function createToggle(parent,label,default,callback)
+    local btn=new("TextButton",{Parent=parent,Size=UDim2.new(0,180,0,35),BackgroundColor3=themes[currentTheme].secondary,Text=label..": "..(default and "Açık" or "Kapalı"),Font=Enum.Font.Gotham,TextSize=16,TextColor3=themes[currentTheme].text})
+    new("UICorner",{Parent=btn,CornerRadius=UDim.new(0,10)})
+    local state=default
+    btn.MouseButton1Click:Connect(function()
+        state=not state
+        btn.Text=label..": "..(state and "Açık" or "Kapalı")
+        callback(state)
     end)
+    return btn
 end
 
-local function disableGodMode()
-    local character = godModeCharacter
-    if not character then return end
+local speedValue=DEFAULT_WALKSPEED
+local jumpValue=DEFAULT_JUMPPOWER
+local speedSlider=createSlider(playerPage,"Hız",MIN_SPEED,MAX_SPEED,DEFAULT_WALKSPEED,function(v) speedValue=v end)
+speedSlider.Position=UDim2.new(0,20,0,20)
+local jumpSlider=createSlider(playerPage,"Zıplama",MIN_JUMP,MAX_JUMP,DEFAULT_JUMPPOWER,function(v) jumpValue=v end)
+jumpSlider.Position=UDim2.new(0,20,0,70)
 
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if humanoid then
-        humanoid.PlatformStand = false
-        humanoid.JumpPower = 50 -- varsayılan jump power
-        humanoid.WalkSpeed = currentSpeed
-    end
-
-    for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = true
-        end
-    end
-
-    -- Infinite jump input bağlantısını kes
-    if infiniteJumpConnection then
-        infiniteJumpConnection:Disconnect()
-        infiniteJumpConnection = nil
-    end
-
-    godModeCharacter = nil
-end
-
-local function toggleGodMode()
-    godModeToggled = not godModeToggled
-    godModeButton.BackgroundColor3 = godModeToggled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
-
-    if godModeToggled then
-        enableGodMode()
-    else
-        disableGodMode()
-    end
-end
-
-godModeButton.MouseButton1Click:Connect(toggleGodMode)
-
--- Panel visibility toggle with Ctrl key
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
-        panel.Visible = not panel.Visible
+local infJump=false
+local infBtn=createToggle(playerPage,"Sonsuz Zıplama",false,function(s) infJump=s end)
+infBtn.Position=UDim2.new(0,20,0,130)
+UserInputService.JumpRequest:Connect(function()
+    if infJump then
+        local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- Panel dragging logic
-local draggingPanel = false
-local dragStartOffset = Vector2.new(0, 0)
+local noclip=false
+local noclipBtn=createToggle(playerPage,"Noclip",false,function(s) noclip=s end)
+noclipBtn.Position=UDim2.new(0,20,0,180)
 
-panel.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingPanel = true
-        dragStartOffset = input.Position - Vector2.new(panel.AbsolutePosition.X, panel.AbsolutePosition.Y)
-    end
-end)
+local themeBtn=new("TextButton",{Parent=settingsPage, Size=UDim2.new(0,160,0,40), Position=UDim2.new(0,20,0,20), Text="Tema Değiştir", Font=Enum.Font.GothamBold, TextSize=16, BackgroundColor3=themes[currentTheme].accent, TextColor3=Color3.new(1,1,1)})
+new("UICorner",{Parent=themeBtn,CornerRadius=UDim.new(0,8)})
+themeBtn.MouseButton1Click:Connect(function() applyTheme(currentTheme=="dark" and "light" or "dark") end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if draggingPanel and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local newAbsolutePosition = input.Position - dragStartOffset
-        panel.Position = UDim2.new(0, newAbsolutePosition.X, 0, newAbsolutePosition.Y)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingPanel = false
-    end
-end)
-
--- CORE GAME LOGIC
-
--- Speed update loop
-task.spawn(function()
-    while task.wait() do
-        local char = player.Character or player.CharacterAdded:Wait()
-        local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = currentSpeed
-        end
-    end
-end)
-
--- ESP Logic with Highlight
-local espHighlights = {}
-
-local function createHighlightForCharacter(char, targetPlayer)
-    if espHighlights[targetPlayer] then
-        espHighlights[targetPlayer]:Destroy()
-        espHighlights[targetPlayer] = nil
-    end
-
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = char
-    highlight.FillColor = Color3.fromRGB(255, 255, 255)
-    highlight.OutlineColor = Color3.fromRGB(100, 100, 100)
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = char
-
-    espHighlights[targetPlayer] = highlight
-
-    local connection
-    connection = char.AncestryChanged:Connect(function()
-        if not char.Parent then
-            if espHighlights[targetPlayer] then
-                espHighlights[targetPlayer]:Destroy()
-                espHighlights[targetPlayer] = nil
-            end
-            if connection then connection:Disconnect() end
-        end
-    end)
-end
-
-local function removeHighlight(targetPlayer)
-    if espHighlights[targetPlayer] then
-        espHighlights[targetPlayer]:Destroy()
-        espHighlights[targetPlayer] = nil
-    end
-end
-
-local function updateESP()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            local char = plr.Character
-            if espToggled then
-                if char then
-                    createHighlightForCharacter(char, plr)
-                else
-                    removeHighlight(plr)
-                end
-            else
-                removeHighlight(plr)
-            end
-        end
-    end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function(char)
-        if espToggled and plr ~= player then
-            createHighlightForCharacter(char, plr)
+local keyBtn=new("TextButton",{Parent=settingsPage,Size=UDim2.new(0,200,0,40),Position=UDim2.new(0,20,0,80),Text="Kısayol Değiştir (Şu an: M)",Font=Enum.Font.Gotham,TextSize=16,BackgroundColor3=themes[currentTheme].secondary,TextColor3=themes[currentTheme].text})
+new("UICorner",{Parent=keyBtn,CornerRadius=UDim.new(0,8)})
+keyBtn.MouseButton1Click:Connect(function()
+    keyBtn.Text="Yeni tuşa bas..."
+    local conn
+    conn=UserInputService.InputBegan:Connect(function(input,gpe)
+        if gpe then return end
+        if input.KeyCode~=Enum.KeyCode.Unknown then
+            toggleKey=input.KeyCode
+            keyBtn.Text="Kısayol Değiştir (Şu an: "..toggleKey.Name..")"
+            conn:Disconnect()
         end
     end)
 end)
 
-for _, plr in ipairs(Players:GetPlayers()) do
-    if plr.Character then
-        plr.Character.AncestryChanged:Connect(function()
-            if espHighlights[plr] and (not plr.Character or not plr.Character.Parent) then
-                removeHighlight(plr)
-            end
+local espEnabled=false
+local espColor=Color3.fromRGB(255,255,255)
+local espSize=Vector2.new(200,50)
+local espToggle=createToggle(espPage,"ESP",false,function(s) espEnabled=s end)
+espToggle.Position=UDim2.new(0,20,0,20)
+
+local colorBtn = new("TextButton",{Parent=espPage, Size=UDim2.new(0,150,0,30), Position=UDim2.new(0,20,0,70), Text="Renk Seç", BackgroundColor3=espColor, Font=Enum.Font.Gotham, TextSize=14, TextColor3=Color3.new(0,0,0)})
+new("UICorner",{Parent=colorBtn, CornerRadius=UDim.new(0,6)})
+colorBtn.MouseButton1Click:Connect(function()
+    main.Visible=false
+    local palette=new("Frame",{Parent=gui, Size=UDim2.new(0,240,0,150), Position=UDim2.new(0.5,-120,0.5,-75), BackgroundColor3=Color3.fromRGB(30,30,30)})
+    new("UICorner",{Parent=palette, CornerRadius=UDim.new(0,8)})
+    local colors={Color3.fromRGB(255,255,255), Color3.fromRGB(255,0,0), Color3.fromRGB(0,255,0), Color3.fromRGB(0,0,255), Color3.fromRGB(255,255,0), Color3.fromRGB(255,0,255), Color3.fromRGB(0,255,255), Color3.fromRGB(128,0,128)}
+    for i,c in ipairs(colors) do
+        local btn=new("TextButton",{Parent=palette,Size=UDim2.new(0,40,0,40),Position=UDim2.new(0,(i-1)*45,0,50),BackgroundColor3=c,Text="",AutoButtonColor=false})
+        new("UICorner",{Parent=btn, CornerRadius=UDim.new(0,6)})
+        btn.MouseButton1Click:Connect(function()
+            espColor=c
+            colorBtn.BackgroundColor3=c
+            palette:Destroy()
+            main.Visible=true
         end)
     end
+end)
+
+local sizeSlider=createSlider(espPage,"Boyut",50,300,espSize.X,function(v) espSize=Vector2.new(v,v/4) end)
+sizeSlider.Position=UDim2.new(0,20,0,120)
+
+local function createESP(playerTarget)
+    if not playerTarget.Character then return end
+    if playerTarget.Character:FindFirstChild("ESPGui") then return end
+    local head=playerTarget.Character:FindFirstChild("Head")
+    if not head then return end
+    local billboard=new("BillboardGui",{Name="ESPGui",Size=UDim2.new(0,espSize.X,0,espSize.Y),Adornee=head,AlwaysOnTop=true,StudsOffset=Vector3.new(0,2,0),Parent=playerTarget.Character})
+    local textLabel=new("TextLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,TextColor3=espColor,TextStrokeTransparency=0.4,Font=Enum.Font.SourceSansBold,TextSize=14,TextScaled=true,Parent=billboard})
 end
 
-task.spawn(function()
-    while task.wait(0.1) do
-        updateESP()
+RunService.Heartbeat:Connect(function()
+    for _,v in pairs(Players:GetPlayers()) do
+        if v~=player then
+            if espEnabled then
+                createESP(v)
+                local gui=v.Character and v.Character:FindFirstChild("ESPGui")
+                if gui and v.Character.PrimaryPart then
+                    local hum=v.Character:FindFirstChildOfClass("Humanoid")
+                    local distance=math.floor((player.Character.PrimaryPart.Position-v.Character.PrimaryPart.Position).Magnitude)
+                    gui.Size=UDim2.new(0,espSize.X,0,espSize.Y)
+                    gui.TextLabel.TextColor3=espColor
+                    gui.TextLabel.Text=v.Name.." | "..(hum and math.floor(hum.Health) or 0).." | "..distance.."m"
+                end
+            else
+                if v.Character and v.Character:FindFirstChild("ESPGui") then v.Character.ESPGui:Destroy() end
+            end
+        end
     end
 end)
 
-game:BindToClose(function()
-    for _, highlight in pairs(espHighlights) do
-        if highlight and highlight.Parent then
-            highlight:Destroy()
+RunService.Heartbeat:Connect(function()
+    local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed=speedValue
+        hum.JumpPower=jumpValue
+        if noclip then
+            for _,v in pairs(player.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide=false end
+            end
         end
+    end
+end)
+
+playerPage.Visible=true
+UserInputService.InputBegan:Connect(function(input,gpe)
+    if gpe then return end
+    if input.KeyCode==toggleKey then main.Visible=not main.Visible
+    elseif input.KeyCode==Enum.KeyCode.Q then gui:Destroy()
     end
 end)
